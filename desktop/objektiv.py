@@ -54,6 +54,78 @@ def config_file() -> Path:
     return config_dir() / "config.json"
 
 
+def pid_file() -> Path:
+    return config_dir() / "instance.pid"
+
+
+def _alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True          # процесс есть, но чужой — не трогаем
+    except OSError:
+        return False
+
+
+def _is_objektiv(pid: int) -> bool:
+    """Проверяет, что это действительно наш процесс (защита от переиспользования pid)."""
+    try:
+        cmd = Path(f"/proc/{pid}/cmdline").read_bytes().decode("utf-8", "replace")
+    except OSError:
+        return False
+    return "objektiv" in cmd
+
+
+def running_pid() -> int | None:
+    """PID уже запущенного дашборда или None."""
+    f = pid_file()
+    try:
+        pid = int(f.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return None
+    if pid <= 0 or not _alive(pid) or not _is_objektiv(pid):
+        try:
+            f.unlink()
+        except OSError:
+            pass
+        return None
+    return pid
+
+
+def toggle_running() -> bool:
+    """Шлёт SIGUSR1 запущенному дашборду (показать/скрыть). True — сигнал ушёл."""
+    import signal as _signal
+
+    pid = running_pid()
+    if pid is None:
+        return False
+    try:
+        os.kill(pid, _signal.SIGUSR1)
+        return True
+    except OSError:
+        return False
+
+
+def write_pid() -> None:
+    f = pid_file()
+    try:
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(str(os.getpid()), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def clear_pid() -> None:
+    try:
+        if pid_file().read_text(encoding="utf-8").strip() == str(os.getpid()):
+            pid_file().unlink()
+    except OSError:
+        pass
+
+
 def data_dirs() -> list[Path]:
     out = [Path(os.environ.get("XDG_DATA_HOME") or _home() / ".local" / "share")]
     raw = os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share")
@@ -757,8 +829,29 @@ def run_gui(cfg: dict, payload: dict, ui_uri: str) -> int:
     webview.connect("load-changed", on_load_changed)
     webview.load_uri(ui_uri)
 
+    # одиночный экземпляр + показ/скрытие по SIGUSR1 (Win+R)
+    write_pid()
+    import atexit
+    import signal as _signal
+    atexit.register(clear_pid)
+
+    def _toggle_visibility():
+        try:
+            if win.get_visible():
+                win.hide()
+            else:
+                win.show_all()
+        except Exception:
+            pass
+        return True
+
+    try:
+        GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, _signal.SIGUSR1, _toggle_visibility)
+    except Exception:
+        pass
+
     win.show_all()
-    win.connect("destroy", Gtk.main_quit)
+    win.connect("destroy", lambda *a: (clear_pid(), Gtk.main_quit()))
     try:
         Gtk.main()
     except KeyboardInterrupt:
@@ -850,6 +943,9 @@ def run_http(cfg: dict, host: str = "127.0.0.1", port: int = 8791,
         daemon_threads = True
 
     write_payload(payload)
+    write_pid()
+    import atexit as _atexit
+    _atexit.register(clear_pid)
     with Server((host, port), Handler) as httpd:
         print(f"[{APP_ID}] {APP_NAME} · http://{host}:{port}/  (Ctrl+C - стоп)", flush=True)
         try:
@@ -971,6 +1067,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--serve", nargs="?", type=int, const=8791, default=None, metavar="PORT",
                     help="HTTP-мост: отдать дашборд в браузере (по умолчанию порт 8791)")
     ap.add_argument("--doctor", action="store_true", help="проверить окружение и зависимости")
+    ap.add_argument("--toggle", action="store_true",
+                    help="показать/скрыть уже запущенный дашборд (иначе запустить)")
     ap.add_argument("--chromium", nargs="?", type=int, const=8791, default=None, metavar="PORT",
                     help="окно Chromium с дашбордом (SVG-дисторсия как на сайте)")
     args = ap.parse_args(argv)
@@ -986,6 +1084,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.doctor:
         return doctor(cfg)
+    if args.toggle:
+        if toggle_running():
+            print(f"[{APP_ID}] дашборд уже запущен — переключил видимость")
+            return 0
+        print(f"[{APP_ID}] дашборд не запущен — запускаю")
     if args.dump_json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0

@@ -54,6 +54,7 @@ cd -/desktop && ./install.sh && objektiv
 ```ini
 exec-once = objektiv
 layerrule = noanim, objektiv
+layerrule = blur, objektiv        # если нужен блюр под дашбордом
 ```
 
 **Sway** (`~/.config/sway/config`):
@@ -72,6 +73,30 @@ systemctl --user enable --now objektiv.service
 Дашборд — layer-surface: он всегда поверх обоев, не перехватывает фокус
 (`keyboard-interactivity: on-demand`), поэтому рабочий стол и бар работают как
 обычно. Клик по ярлыку — запуск приложения; дашборд остаётся на месте.
+
+### Горячая клавиша Win + R
+
+`~/.config/hypr/hyprland.conf`:
+
+```ini
+bind = SUPER, R, exec, objektiv --toggle
+```
+
+Как работает: если дашборд уже запущен — он скрывается или показывается
+(сигнал `SIGUSR1`); если не запущен — запускается. Второй экземпляр создать
+нельзя: процесс пишет свой PID в `~/.config/objektiv/instance.pid`, а
+`--toggle` находит его по этому файлу и шлёт сигнал.
+
+Если дашборд не должен висеть поверх обоев постоянно — убери `exec-once`
+из конфига Hyprland и запускай только по клавише.
+
+Другие варианты:
+
+```ini
+bind = SUPER, D, exec, objektiv --toggle      # рядом с Win+D
+bind = SUPER SHIFT, R, exec, objektiv         # всегда новый экземпляр
+bind = , XF86Launch0, exec, objektiv --toggle # спец-кнопка на клавиатуре
+```
 
 ## Управление
 
@@ -146,6 +171,16 @@ objektiv --doctor        # покажет, что именно сломано
 objektiv --chromium      # окно Chromium — полный вид, ярлыки работают
 objektiv --serve 8791    # тот же дашборд в браузере по адресу
 ```
+
+**Win+R не срабатывает** — проверь `objektiv --toggle` из терминала: должно
+написаться «дашборд уже запущен — переключил видимость». Если дашборд не
+запущен, `--toggle` сам его запустит. Файл блокировки:
+`~/.config/objektiv/instance.pid`.
+
+**Win+R не срабатывает** — проверь из терминала `objektiv --toggle`: должно
+написаться «дашборд уже запущен — переключил видимость». Если дашборд не
+запущен, `--toggle` сам его запустит. Файл блокировки:
+`~/.config/objektiv/instance.pid` (удали, если процесс уже мёртв).
 
 **Не появляется поверх обоев / нет слоя** — не хватает `gtk-layer-shell`:
 

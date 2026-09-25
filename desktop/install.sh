@@ -77,6 +77,9 @@ Hyprland (~/.config/hypr/hyprland.conf):
   layerrule = noanim, objektiv
   layerrule = blur, objektiv        # если нужен блюр под дашбордом
 
+  # горячая клавиша Win+R — показать/скрыть дашборд
+  bind = SUPER, R, exec, objektiv --toggle
+
 Sway (~/.config/sway/config):
   exec objektiv
 
