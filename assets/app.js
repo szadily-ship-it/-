@@ -105,7 +105,7 @@
         <div class="stat"><b>${window.OSINT.tools.length}</b><span>источников</span></div>
         <div class="stat"><b>${window.OSINT.channels.length}</b><span>каналов</span></div>
         <div class="stat"><b>${window.OSINT.dorks.length}</b><span>dorks</span></div>
-        <div class="stat"><b>NTSC</b><span>fisheye 1.7mm</span></div>
+        <div class="stat"><b>CAM-07</b><span>архив</span></div>
       </div>
     `;
   }
@@ -214,9 +214,6 @@
         const a = $("#scanInput") || $("#filterInput");
         a && a.focus();
       }
-      if (e.key === "f" && tag !== "INPUT") {
-        window.CAM && window.CAM.toggleFisheye();
-      }
       if ((e.key === "h" || e.key === "?") && tag !== "INPUT") {
         $("#help").classList.toggle("show");
       }
@@ -233,8 +230,6 @@
         if (ch) switchChannel(ch.id);
       }
     });
-    const fb = $("#fisheyeBtn");
-    if (fb) fb.addEventListener("click", () => window.CAM.toggleFisheye());
     const hb = $("#helpClose");
     if (hb) hb.addEventListener("click", () => $("#help").classList.remove("show"));
   }

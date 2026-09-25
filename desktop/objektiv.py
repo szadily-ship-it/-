@@ -74,9 +74,6 @@ def ui_dir() -> Path:
 # --------------------------------------------------------------------------- #
 
 DEFAULT_CONFIG: dict = {
-    "fisheye": True,
-    "fisheye_strength": 78,
-    "lens_mode": "auto",          # auto | filter | css  (filter = SVG-дисторсия)
     "columns": "auto",            # auto | число колонок
     "icon_size": 56,
     "show_exec": True,
@@ -96,7 +93,7 @@ DEFAULT_CONFIG: dict = {
 }
 
 BOOL_KEYS = {
-    "fisheye", "show_exec", "fullscreen", "keyboard_focus", "scanlines",
+    "show_exec", "fullscreen", "keyboard_focus", "scanlines",
     "grain", "flicker", "hide_on_launch", "clock24",
 }
 
@@ -120,12 +117,9 @@ def load_config(path: Path | None = None) -> dict:
             else:
                 cfg[k] = v
     # нормализация
-    cfg["fisheye_strength"] = max(0, min(200, int(cfg.get("fisheye_strength", 78))))
     cfg["icon_size"] = max(24, min(128, int(cfg.get("icon_size", 56))))
     cfg["margin"] = max(0, int(cfg.get("margin", 0)))
     cfg["opacity"] = min(1.0, max(0.2, float(cfg.get("opacity", 1.0))))
-    if cfg["lens_mode"] not in ("auto", "filter", "css"):
-        cfg["lens_mode"] = "auto"
     if not isinstance(cfg.get("favorites"), list):
         cfg["favorites"] = []
     return cfg

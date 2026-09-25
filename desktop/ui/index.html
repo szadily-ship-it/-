@@ -9,15 +9,6 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <svg class="filter-host" aria-hidden="true">
-    <defs>
-      <filter id="fisheye" x="-18%" y="-18%" width="136%" height="136%" color-interpolation-filters="sRGB">
-        <feImage id="fisheyeMap" result="map" preserveAspectRatio="none" />
-        <feDisplacementMap id="fisheyeDisp" in="SourceGraphic" in2="map" scale="78" xChannelSelector="R" yChannelSelector="G" />
-      </filter>
-    </defs>
-  </svg>
-
   <div class="bezel">
     <div class="screen">
       <div id="world">
@@ -36,7 +27,7 @@
                   <input id="q" type="text" placeholder="ПОИСК ПРИЛОЖЕНИЯ…" autocomplete="off" spellcheck="false" />
                   <button id="qClear" type="button">СБРОС</button>
                 </div>
-                <div class="scan-help" id="scanHelp">/ — поиск · ↑↓←→ — выбор · ↵ — запуск · S — в избранное · F — объектив · R — пересканировать · H — помощь</div>
+                <div class="scan-help" id="scanHelp">/ — поиск · ↑↓←→ — выбор · ↵ — запуск · S — в избранное · R — пересканировать · H — помощь</div>
               </div>
 
               <div class="feed-head">
@@ -75,22 +66,20 @@
     <div class="bracket se"></div>
     <div class="reticle"></div>
     <div class="tl"><span class="rec-dot"></span>REC&nbsp; <span id="recTime">00:00:00</span></div>
-    <div class="tc">CAM-07 &nbsp; FISHEYE 1.7mm &nbsp; f/1.4</div>
     <div class="tr" id="clock">0000-00-00  00:00:00</div>
-    <div class="bl">NTSC &nbsp; 480i &nbsp; ISO-400 &nbsp; <span id="frameNo">F 0000000</span></div>
+    <div class="bl">CAM-07 &nbsp; DASHBOARD &nbsp; <span id="frameNo">F 0000000</span></div>
     <div class="br" id="hostHud">OBJ-07 &nbsp; APPS</div>
-    <button class="hud-toggle" id="fisheyeBtn" type="button">FISHEYE ON</button>
   </div>
 
   <div id="boot">
     <div class="boot-inner">
       <div class="k">POWER ON</div>
       <h1>ОБЪЕКТИВ-07</h1>
-      <div class="boot-line"><span>LENS</span><b>FISHEYE 1.7mm</b></div>
-      <div class="boot-line"><span>IRIS</span><b>f/1.4</b></div>
-      <div class="boot-line"><span>SIGNAL</span><b>NTSC-M</b></div>
       <div class="boot-line"><span>SOURCE</span><b>XDG DESKTOP ENTRIES</b></div>
-      <div class="boot-line"><span>CALIBRATION</span><b>BARREL DISTORTION</b></div>
+      <div class="boot-line"><span>MODE</span><b>DASHBOARD / LAUNCHER</b></div>
+      <div class="boot-line"><span>SCAN</span><b>LOCAL ONLY</b></div>
+      <div class="boot-line"><span>CAMERA</span><b>CAM-07 · MONO</b></div>
+      <div class="boot-line"><span>SIGNAL</span><b>STABLE</b></div>
       <div class="bar"><i></i></div>
     </div>
   </div>
@@ -105,7 +94,6 @@
         <li><kbd>↵</kbd> — запустить</li>
         <li><kbd>S</kbd> — в избранное / убрать</li>
         <li><kbd>0</kbd>–<kbd>9</kbd> — канал</li>
-        <li><kbd>F</kbd> — fisheye on/off</li>
         <li><kbd>R</kbd> — пересканировать приложения</li>
         <li><kbd>H</kbd> — этот экран</li>
         <li><kbd>ESC</kbd> — закрыть / сбросить поиск</li>

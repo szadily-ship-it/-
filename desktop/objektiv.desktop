@@ -8,4 +8,4 @@ Icon=@PREFIX@/objektiv.svg
 Terminal=false
 StartupNotify=false
 Categories=System;Utility;DesktopSettings;
-Keywords=dashboard;launcher;objektiv;camera;fisheye;apps;
+Keywords=dashboard;launcher;objektiv;camera;apps;

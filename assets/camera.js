@@ -1,50 +1,8 @@
-/* analog camera: fisheye displacement, grain, HUD clock, channel static */
+/* analog camera: grain, HUD clock, channel static */
 (function () {
   const $ = (s, r) => (r || document).querySelector(s);
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-
-  function generateDisplacement(size) {
-    const c = document.createElement("canvas");
-    c.width = c.height = size;
-    const ctx = c.getContext("2d");
-    const img = ctx.createImageData(size, size);
-    const d = img.data;
-    const cx = (size - 1) / 2;
-    const cy = (size - 1) / 2;
-    const maxR = Math.min(cx, cy);
-    const k = 0.72;
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        const nx = (x - cx) / maxR;
-        const ny = (y - cy) / maxR;
-        const r = Math.sqrt(nx * nx + ny * ny);
-        const srcR = r < 1e-6 ? 0 : r * (1 + k * r * r);
-        const scale = r < 1e-6 ? 1 : srcR / r;
-        const sx = nx * scale * maxR + cx;
-        const sy = ny * scale * maxR + cy;
-        const i = (y * size + x) * 4;
-        d[i]     = clamp(128 + ((sx - x) / maxR) * 127, 0, 255);
-        d[i + 1] = clamp(128 + ((sy - y) / maxR) * 127, 0, 255);
-        d[i + 2] = 128;
-        d[i + 3] = 255;
-      }
-    }
-    ctx.putImageData(img, 0, 0);
-    return c.toDataURL("image/png");
-  }
-
-  function installFisheye() {
-    const fe = document.getElementById("fisheyeMap");
-    if (!fe) return;
-    try {
-      const url = generateDisplacement(512);
-      fe.setAttribute("href", url);
-      fe.setAttributeNS("http://www.w3.org/1999/xlink", "href", url);
-      const world = document.getElementById("world");
-      if (world && !world.classList.contains("flat")) world.classList.add("warped");
-    } catch (e) { /* overlays still sell the lens */ }
-  }
 
   function grainLoop() {
     const canvas = document.getElementById("grain");
@@ -102,19 +60,8 @@
       const w = canvas.width = window.innerWidth;
       const h = canvas.height = window.innerHeight;
       ctx.clearRect(0, 0, w, h);
-      const cx = w * 0.5;
-      const cy = h * 0.48;
-      const k = 0.55;
-      ctx.strokeStyle = "rgba(255,255,255,0.55)";
+      ctx.strokeStyle = "rgba(255,255,255,0.5)";
       ctx.lineWidth = 1;
-
-      function distort(x, y) {
-        const nx = (x - cx) / (w * 0.5);
-        const ny = (y - cy) / (h * 0.5);
-        const r = Math.sqrt(nx * nx + ny * ny) || 0.0001;
-        const f = 1 / (1 + k * r * r);
-        return [cx + nx * f * w * 0.5, cy + ny * f * h * 0.5];
-      }
 
       const cols = 14;
       const rows = 10;
@@ -123,8 +70,7 @@
         for (let j = 0; j <= 40; j++) {
           const x = (i / cols) * w;
           const y = (j / 40) * h;
-          const [dx, dy] = distort(x, y);
-          if (j === 0) ctx.moveTo(dx, dy); else ctx.lineTo(dx, dy);
+          if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.stroke();
       }
@@ -133,15 +79,10 @@
         for (let i = 0; i <= 50; i++) {
           const x = (i / 50) * w;
           const y = (j / rows) * h;
-          const [dx, dy] = distort(x, y);
-          if (i === 0) ctx.moveTo(dx, dy); else ctx.lineTo(dx, dy);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.stroke();
       }
-      ctx.beginPath();
-      ctx.arc(cx, cy, Math.min(w, h) * 0.42, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(255,255,255,0.35)";
-      ctx.stroke();
     }
     render();
     window.addEventListener("resize", render);
@@ -219,15 +160,6 @@
         screen && screen.classList.remove("shake");
       }, ms || 160);
     },
-    toggleFisheye() {
-      const world = document.getElementById("world");
-      const btn = document.getElementById("fisheyeBtn");
-      if (!world) return;
-      const on = world.classList.toggle("flat");
-      if (!on) world.classList.add("warped");
-      else world.classList.remove("warped");
-      if (btn) btn.textContent = on ? "FISHEYE OFF" : "FISHEYE ON";
-    },
     boot(done) {
       const boot = document.getElementById("boot");
       setTimeout(() => {
@@ -239,7 +171,6 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
-    installFisheye();
     grainLoop();
     drawFisheyeGrid();
     clock();

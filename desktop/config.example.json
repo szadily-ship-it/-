@@ -1,7 +1,4 @@
 {
-  "fisheye": true,
-  "fisheye_strength": 78,
-  "lens_mode": "auto",
   "columns": "auto",
   "icon_size": 56,
   "show_exec": true,

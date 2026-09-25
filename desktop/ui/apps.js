@@ -17,7 +17,7 @@
   ];
 
   const UI_DEFAULTS = {
-    fisheye: true, fisheye_strength: 78, lens_mode: "auto", columns: "auto",
+    columns: "auto",
     icon_size: 56, show_exec: true, terminal: "kitty", opacity: 1, fullscreen: true,
     margin: 0, layer: "top", keyboard_focus: true, favorites: [], scanlines: true,
     grain: true, flicker: true, hide_on_launch: false, categories: null, clock24: true,
@@ -177,19 +177,6 @@
       });
       el.addEventListener("dblclick", () => { /* запуск уже по одному клику */ });
     });
-    bend();
-  }
-
-  function bend() {
-    const grid = $("#grid");
-    if (!grid || !document.body.classList.contains("lens-bend")) return;
-    const cards = grid.querySelectorAll(".app");
-    const cols = Math.max(1, getComputedStyle(grid).gridTemplateColumns.split(" ").length);
-    cards.forEach((el, i) => {
-      const c = i % cols;
-      const off = (c - (cols - 1) / 2) / Math.max(1, (cols - 1) / 2);
-      el.style.transform = "rotateY(" + (-off * 3.4).toFixed(2) + "deg)";
-    });
   }
 
   function render() {
@@ -199,7 +186,7 @@
     const help = $("#scanHelp");
     if (help) {
       help.textContent =
-        "/ — поиск · ↑↓←→ — выбор · ↵ — запуск · S — избранное · F — объектив · R — перескан · H — помощь";
+        "/ — поиск · ↑↓←→ — выбор · ↵ — запуск · S — избранное · R — перескан · H — помощь";
     }
   }
 
@@ -239,12 +226,6 @@
     if (!app) return;
     bridge({ cmd: "favorite", id: app.id });
     window.CAM && window.CAM.osd(isFav(app.id) ? "УБРАНО · " + app.name : "ИЗБРАННОЕ · " + app.name);
-  }
-
-  function toggleFisheye() {
-    const on = window.CAM ? window.CAM.toggleFisheye() : true;
-    bridge({ cmd: "config", patch: { fisheye: !!on } });
-    window.CAM && window.CAM.osd(on ? "ОБЪЕКТИВ · ВКЛ" : "ОБЪЕКТИВ · ВЫКЛ");
   }
 
   function rescan() {
@@ -306,8 +287,7 @@
     }
 
     const k = ev.key.toLowerCase();
-    if (k === "f") { ev.preventDefault(); toggleFisheye(); }
-    else if (k === "r") { ev.preventDefault(); rescan(); }
+    if (k === "r") { ev.preventDefault(); rescan(); }
     else if (k === "h") { ev.preventDefault(); toggleHelp(); }
     else if (k === "s") { ev.preventDefault(); toggleFav(); }
     else if (/^[0-9]$/.test(ev.key)) { ev.preventDefault(); setChannelByIndex(Number(ev.key)); }
@@ -363,8 +343,6 @@
       renderGrid();
       q && q.focus();
     });
-    const fb = $("#fisheyeBtn");
-    if (fb) fb.addEventListener("click", toggleFisheye);
     const hc = $("#helpClose");
     if (hc) hc.addEventListener("click", () => toggleHelp(false));
     document.addEventListener("keydown", onKey);
@@ -391,6 +369,5 @@
         });
       }, 500);
     }
-    window.addEventListener("resize", bend);
   });
 })();

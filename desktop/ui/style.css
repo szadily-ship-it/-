@@ -1,4 +1,4 @@
-/* ОБЪЕКТИВ-07 · DASHBOARD — black body, old fisheye camera */
+/* ОБЪЕКТИВ-07 · DASHBOARD — black body, old camera */
 :root {
   --bg: #000;
   --fg: #d4d4d4;
@@ -36,9 +36,6 @@ a { color: inherit; text-decoration: none; }
 button, input, textarea { font-family: inherit; color: inherit; }
 input, textarea { cursor: text; }
 
-/* —— hidden svg filter host —— */
-.filter-host { position: absolute; width: 0; height: 0; overflow: hidden; }
-
 /* —— CRT bezel / sensor —— */
 .bezel { position: fixed; inset: 0; background: #000; overflow: hidden; }
 
@@ -68,33 +65,10 @@ input, textarea { cursor: text; }
   position: absolute;
   inset: 0;
   overflow: hidden;
-  transform: scale(1.08);
-  transform-origin: 50% 48%;
-  -webkit-filter: contrast(1.22) saturate(0) brightness(1.05);
-  filter: contrast(1.22) saturate(0) brightness(1.05);
+  -webkit-filter: contrast(1.18) saturate(0) brightness(1.04);
+  filter: contrast(1.18) saturate(0) brightness(1.04);
   will-change: filter, transform;
 }
-
-#world.warped {
-  -webkit-filter: url(#fisheye) contrast(1.18) saturate(0) brightness(1.05);
-  filter: url(#fisheye) contrast(1.18) saturate(0) brightness(1.05);
-}
-
-#world.flat {
-  -webkit-filter: contrast(1.08) saturate(0) brightness(1.02);
-  filter: contrast(1.08) saturate(0) brightness(1.02);
-  transform: scale(1);
-}
-
-body.lens-bend .ui { perspective: 1500px; perspective-origin: 50% 45%; }
-body.lens-bend .channels { transform: perspective(1500px) rotateY(2.5deg); transform-origin: left center; }
-body.lens-bend .grid { transform: perspective(1500px) rotateX(1.6deg); transform-origin: 50% 0; }
-
-/* CSS-fallback объектива: цилиндрический изгиб сетки (если SVG-фильтр не работает) */
-body.lens-css #world { transform: none; }
-body.lens-css .ui { perspective: 1500px; perspective-origin: 50% 45%; }
-body.lens-css .channels { transform: perspective(1500px) rotateY(2.5deg); transform-origin: left center; }
-body.lens-css .grid { transform: perspective(1500px) rotateX(1.6deg); transform-origin: 50% 0; }
 
 .ui { height: 100%; display: grid; grid-template-rows: auto 1fr; min-height: 0; }
 
@@ -355,7 +329,6 @@ body.lens-css .grid { transform: perspective(1500px) rotateX(1.6deg); transform-
 }
 .hud .tl { top: 28px; left: 42px; }
 .hud .tr { top: 28px; right: 42px; }
-.hud .tc { top: 28px; left: 50%; transform: translateX(-50%); color: #aaa; font-size: 10px; }
 .hud .bl { bottom: 28px; left: 42px; color: #888; font-size: 10px; }
 .hud .br { bottom: 28px; right: 42px; color: #888; font-size: 10px; }
 
@@ -387,23 +360,6 @@ body.lens-css .grid { transform: perspective(1500px) rotateX(1.6deg); transform-
 .reticle::before, .reticle::after { content: ""; position: absolute; background: #fff; }
 .reticle::before { left: 50%; top: 0; width: 1px; height: 100%; transform: translateX(-50%); }
 .reticle::after { top: 50%; left: 0; height: 1px; width: 100%; transform: translateY(-50%); }
-
-.hud-toggle {
-  pointer-events: auto;
-  position: absolute;
-  bottom: 26px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 1px solid #333;
-  background: rgba(0,0,0,.35);
-  color: #888;
-  padding: 4px 10px;
-  font-size: 9px;
-  letter-spacing: .3em;
-  cursor: crosshair;
-  mix-blend-mode: normal;
-}
-.hud-toggle:hover { color: #fff; border-color: #777; }
 
 /* overlays */
 .vignette {
@@ -568,7 +524,6 @@ body.no-grain #grain { display: none; }
   .ch { min-width: 150px; }
   .mast { padding: 38px 18px 6px; }
   .stat-row { grid-template-columns: 1fr 1fr; }
-  .hud .tc { display: none; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
 
