@@ -88,13 +88,14 @@ DEFAULT_CONFIG: dict = {
     "grain": True,
     "flicker": True,
     "hide_on_launch": False,      # прятать дашборд на время запуска приложения
+    "fallback_browser": True,     # если webkit2gtk сломан — открыть в браузере/Chromium
     "categories": None,           # None — все, либо список каналов
     "clock24": True,
 }
 
 BOOL_KEYS = {
     "show_exec", "fullscreen", "keyboard_focus", "scanlines",
-    "grain", "flicker", "hide_on_launch", "clock24",
+    "grain", "flicker", "hide_on_launch", "clock24", "fallback_browser",
 }
 
 
@@ -556,6 +557,29 @@ def launch_app(app: dict, cfg: dict) -> tuple[bool, str]:
 LAYER_MAP_NAMES = ("top", "bottom", "background", "overlay")
 
 
+class BackendError(RuntimeError):
+    """Не удалось поднять GTK/WebKit-бэкенд (сломаны библиотеки)."""
+
+
+WEBKIT_FIX = """[{app}] Не работает бэкенд WebKit2GTK (webkit2gtk).
+
+Причина почти всегда — сломанная/неполная установка webkit2gtk, чаще всего
+не хватает libjxl (libjxl.so.0.11). Починка:
+
+  sudo pacman -Syu                      # лечит частичное обновление
+  sudo pacman -S webkit2gtk libjxl      # точечно, если обновлять всё нельзя
+
+Проверить, что именно не тянется:
+  ldd /usr/lib/libwebkit2gtk-4.0.so.37 | grep 'not found'
+
+Пока не починилось — дашборд работает без webkit2gtk:
+  objektiv --serve 8791    # откроется в браузере, ярлыки работают
+  objektiv --chromium      # окно Chromium (webkit2gtk не нужен)
+  objektiv --demo --serve  # демо-набор приложений
+
+Авто-фалбэк (если включён в конфиге) делает это сам."""
+
+
 def run_gui(cfg: dict, payload: dict, ui_uri: str) -> int:
     try:
         import gi
@@ -568,8 +592,7 @@ def run_gui(cfg: dict, payload: dict, ui_uri: str) -> int:
     try:
         gi.require_version("WebKit2", "4.0")
     except ValueError:
-        print(f"[{APP_ID}] нужен webkit2gtk (WebKit2 4.0)", file=sys.stderr)
-        return 2
+        raise BackendError("нужен webkit2gtk (WebKit2 4.0)")
     try:
         gi.require_version("GtkLayerShell", "0.1")
         from gi.repository import GtkLayerShell  # type: ignore
@@ -577,7 +600,14 @@ def run_gui(cfg: dict, payload: dict, ui_uri: str) -> int:
     except (ValueError, ImportError):
         have_layer_shell = False
 
-    from gi.repository import Gdk, GLib, Gtk, WebKit2
+    from gi.repository import Gdk, GLib, Gtk, WebKit2  # noqa: F401
+
+    # libwebkit2gtk может не загрузиться (например, нет libjxl) — ловим здесь,
+    # чтобы уронить только бэкенд, а не всё приложение
+    try:
+        WebKit2.UserContentManager()
+    except Exception as exc:
+        raise BackendError(f"webkit2gtk не загружается: {exc}")
 
     win = Gtk.Window(title=APP_NAME)
     win.set_decorated(False)
@@ -591,7 +621,8 @@ def run_gui(cfg: dict, payload: dict, ui_uri: str) -> int:
             win.set_visual(visual)
     except Exception:
         pass
-    win.set_opacity(cfg["opacity"])
+    if float(cfg.get("opacity", 1.0)) < 1.0:  # set_opacity() deprecated
+        win.set_opacity(cfg["opacity"])
 
     manager = WebKit2.UserContentManager()
     webview = WebKit2.WebView.new_with_user_content_manager(manager)
@@ -878,6 +909,55 @@ def run_chromium(cfg: dict, port: int, demo: bool) -> int:
 # --------------------------------------------------------------------------- #
 
 
+def doctor(cfg: dict) -> int:
+    """Проверяет окружение: gi, Gtk, WebKit2, layer-shell, браузеры."""
+    print(f"{APP_NAME} · диагностика")
+    print(f"  python      : {sys.version.split()[0]}")
+    print(f"  ui          : {ui_dir()}")
+    print(f"  конфиг      : {config_file()} ({'есть' if config_file().is_file() else 'нет, будет создан'})")
+    print(f"  приложений  : {len(collect_apps(cfg))}")
+
+    try:
+        import gi
+        print(f"  PyGObject   : ok ({getattr(gi, '__version__', '?')})")
+    except ImportError:
+        print("  PyGObject   : НЕТ  → sudo pacman -S python-gobject")
+        return 1
+
+    try:
+        gi.require_version("Gtk", "3.0")
+        from gi.repository import Gtk  # noqa: F401
+        print("  GTK3        : ok")
+    except Exception as exc:
+        print(f"  GTK3        : ОШИБКА ({exc})")
+
+    try:
+        gi.require_version("WebKit2", "4.0")
+        from gi.repository import WebKit2  # noqa: F401
+        try:
+            WebKit2.UserContentManager()
+            print("  WebKit2GTK  : ok")
+        except Exception as exc:
+            print(f"  WebKit2GTK  : БИБЛИОТЕКА НЕ ГРУЗИТСЯ ({exc})")
+            print("               → sudo pacman -Syu && sudo pacman -S webkit2gtk libjxl")
+    except Exception as exc:
+        print(f"  WebKit2GTK  : НЕТ ({exc}) → sudo pacman -S webkit2gtk")
+
+    try:
+        gi.require_version("GtkLayerShell", "0.1")
+        from gi.repository import GtkLayerShell  # noqa: F401
+        print("  LayerShell  : ok (Hyprland/Sway, поверх обоев)")
+    except Exception:
+        print("  LayerShell  : нет → sudo pacman -S gtk-layer-shell (иначе обычное окно)")
+
+    browsers = [b for b in ("chromium", "chromium-browser", "google-chrome",
+                            "google-chrome-stable", "microsoft-edge", "brave-browser",
+                            "vivaldi") if shutil.which(b)]
+    print(f"  браузеры    : {', '.join(browsers) if browsers else 'не найдены'}")
+    print(f"  сессия      : {detect_desktop()}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog=APP_ID, description=f"{APP_NAME} — дашборд приложений")
     ap.add_argument("--config", type=Path, default=None, help="путь к config.json")
@@ -890,6 +970,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--uri", action="store_true", help="напечатать file:// URI интерфейса")
     ap.add_argument("--serve", nargs="?", type=int, const=8791, default=None, metavar="PORT",
                     help="HTTP-мост: отдать дашборд в браузере (по умолчанию порт 8791)")
+    ap.add_argument("--doctor", action="store_true", help="проверить окружение и зависимости")
     ap.add_argument("--chromium", nargs="?", type=int, const=8791, default=None, metavar="PORT",
                     help="окно Chromium с дашбордом (SVG-дисторсия как на сайте)")
     args = ap.parse_args(argv)
@@ -903,6 +984,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.print_config:
         print(json.dumps(cfg, ensure_ascii=False, indent=2))
         return 0
+    if args.doctor:
+        return doctor(cfg)
     if args.dump_json:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 0
@@ -925,7 +1008,21 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     write_payload(payload)
-    return run_gui(cfg, payload, (ui_dir() / "index.html").as_uri())
+    try:
+        return run_gui(cfg, payload, (ui_dir() / "index.html").as_uri())
+    except BackendError as exc:
+        print(WEBKIT_FIX.format(app=APP_ID), file=sys.stderr)
+        print(f"[{APP_ID}] причина: {exc}", file=sys.stderr)
+        if not cfg.get("fallback_browser", True):
+            return 3
+        browsers = [b for b in ("chromium", "chromium-browser", "google-chrome",
+                                "google-chrome-stable", "microsoft-edge",
+                                "brave-browser", "vivaldi") if shutil.which(b)]
+        if browsers:
+            print(f"[{APP_ID}] фалбэк: окно {browsers[0]}", file=sys.stderr)
+            return run_chromium(cfg, 8791, args.demo)
+        print(f"[{APP_ID}] фалбэк: дашборд в браузере на http://127.0.0.1:8791/", file=sys.stderr)
+        return run_http(cfg, port=8791, demo=args.demo)
 
 
 if __name__ == "__main__":

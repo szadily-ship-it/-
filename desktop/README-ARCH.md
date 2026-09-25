@@ -103,6 +103,7 @@ systemctl --user enable --now objektiv.service
 | `favorites` | `[]` | список desktop-id избранного |
 | `scanlines` / `grain` / `flicker` | `true` | слои аналоговой картинки |
 | `hide_on_launch` | `false` | прятать дашборд на мгновение при запуске |
+| `fallback_browser` | `true` | если `webkit2gtk` сломан — сам открыть дашборд в Chromium или браузере |
 | `categories` | `null` | `null` — все каналы, иначе список (напр. `["ИНТЕРНЕТ","РАЗРАБОТКА"]`) |
 | `clock24` | `true` | 24-часовой формат в OSD |
 
@@ -124,6 +125,41 @@ objektiv --write-payload # пересобрать payload.js без запуск
 Дисторсия объектива (рыбий глаз) убрана полностью: в разных сборках WebKit она
 выглядела криво. Остался чистый аналоговый кадр — виньетка, скан-линии, зерно,
 хроматика, мерцание, ровная сетка монитора и OSD.
+
+## Если не запускается
+
+**`Failed to load shared library 'libwebkit2gtk-4.0.so.37' ... libjxl.so.0.11:
+cannot open shared object file`** — сломана установка `webkit2gtk` (чаще всего
+после частичного обновления):
+
+```bash
+sudo pacman -Syu                      # лечит частичное обновление
+sudo pacman -S webkit2gtk libjxl      # точечно
+ldd /usr/lib/libwebkit2gtk-4.0.so.37 | grep 'not found'   # что ещё не тянется
+```
+
+Пока не починилось, дашборд работает и без `webkit2gtk` (сам подставит фалбэк,
+если `fallback_browser: true`):
+
+```bash
+objektiv --doctor        # покажет, что именно сломано
+objektiv --chromium      # окно Chromium — полный вид, ярлыки работают
+objektiv --serve 8791    # тот же дашборд в браузере по адресу
+```
+
+**Не появляется поверх обоев / нет слоя** — не хватает `gtk-layer-shell`:
+
+```bash
+sudo pacman -S gtk-layer-shell
+objektiv --doctor        # строка LayerShell должна быть ok
+```
+
+**Ярлыки не найдены** — проверь `objektiv --list`: приложения берутся из
+`.desktop`-файлов XDG; записи с `NoDisplay=true`, `Hidden=true` и без `Exec`
+пропускаются намеренно.
+
+**Иконки пустые** — тема оформления без иконок приложений; в `--doctor` смотри
+`icon_size` и ставь тему (`papirus-icon-theme`, `adwaita-icon-theme`).
 
 ## Устройство
 

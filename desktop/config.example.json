@@ -13,6 +13,7 @@
   "grain": true,
   "flicker": true,
   "hide_on_launch": false,
+  "fallback_browser": true,
   "categories": null,
   "clock24": true
 }
