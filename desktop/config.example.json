@@ -1,0 +1,21 @@
+{
+  "fisheye": true,
+  "fisheye_strength": 78,
+  "lens_mode": "auto",
+  "columns": "auto",
+  "icon_size": 56,
+  "show_exec": true,
+  "terminal": "kitty",
+  "opacity": 1.0,
+  "fullscreen": true,
+  "margin": 0,
+  "layer": "top",
+  "keyboard_focus": true,
+  "favorites": [],
+  "scanlines": true,
+  "grain": true,
+  "flicker": true,
+  "hide_on_launch": false,
+  "categories": null,
+  "clock24": true
+}

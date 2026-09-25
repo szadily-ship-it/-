@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=ОБЪЕКТИВ-07
+GenericName=Дашборд приложений
+Comment=Ярлыки приложений под объективом старой камеры
+Exec=objektiv
+Icon=@PREFIX@/objektiv.svg
+Terminal=false
+StartupNotify=false
+Categories=System;Utility;DesktopSettings;
+Keywords=dashboard;launcher;objektiv;camera;fisheye;apps;

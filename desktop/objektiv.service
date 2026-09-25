@@ -1,0 +1,15 @@
+[Unit]
+Description=ОБЪЕКТИВ-07 — дашборд приложений
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env python3 @PREFIX@/objektiv.py
+Restart=on-failure
+RestartSec=2
+# layer-shell работает только на Wayland — на X11 окно будет обычным, always-on-top
+Environment=GDK_BACKEND=wayland
+
+[Install]
+WantedBy=graphical-session.target

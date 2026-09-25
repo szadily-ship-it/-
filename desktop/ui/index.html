@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ОБЪЕКТИВ-07 · APP DASHBOARD</title>
+  <meta name="description" content="Дашборд приложений Arch под объективом старой камеры." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect fill='%23000' width='16' height='16'/%3E%3Ccircle cx='8' cy='8' r='6' fill='none' stroke='%23ccc' stroke-width='1'/%3E%3Ccircle cx='8' cy='8' r='1' fill='%23ccc'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <svg class="filter-host" aria-hidden="true">
+    <defs>
+      <filter id="fisheye" x="-18%" y="-18%" width="136%" height="136%" color-interpolation-filters="sRGB">
+        <feImage id="fisheyeMap" result="map" preserveAspectRatio="none" />
+        <feDisplacementMap id="fisheyeDisp" in="SourceGraphic" in2="map" scale="78" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="bezel">
+    <div class="screen">
+      <div id="world">
+        <div class="ui">
+          <header class="mast">
+            <div class="mast-title">ОБЪЕКТИВ-07 <span id="subtitle">APP DASHBOARD</span></div>
+            <div class="mast-meta" id="hostMeta">CAM-07 · ARCH</div>
+          </header>
+          <div class="body">
+            <nav class="channels" id="channels"></nav>
+            <main class="feed" id="feed">
+              <div class="stat-row" id="stats"></div>
+
+              <div class="scan-box">
+                <div class="scan-row">
+                  <input id="q" type="text" placeholder="ПОИСК ПРИЛОЖЕНИЯ…" autocomplete="off" spellcheck="false" />
+                  <button id="qClear" type="button">СБРОС</button>
+                </div>
+                <div class="scan-help" id="scanHelp">/ — поиск · ↑↓←→ — выбор · ↵ — запуск · S — в избранное · F — объектив · R — пересканировать · H — помощь</div>
+              </div>
+
+              <div class="feed-head">
+                <strong id="chTitle">ВСЕ КАНАЛЫ</strong>
+                <span id="chCount"></span>
+              </div>
+
+              <div class="grid" id="grid"></div>
+              <div class="empty" id="empty" hidden>НЕТ СИГНАЛА — приложения не найдены</div>
+              <div class="disclaimer">
+                Ярлыки берутся из .desktop-файлов установленных приложений (XDG).
+                Запуск — локальный, наружу ничего не отправляется.
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="grid-canvas"></canvas>
+  <div class="chroma"></div>
+  <div class="vignette"></div>
+  <div class="scanlines"></div>
+  <div class="scan-roll"></div>
+  <div class="glass"></div>
+  <canvas id="grain"></canvas>
+  <div class="static-flash"></div>
+
+  <div class="osd" id="osd" aria-hidden="true"></div>
+
+  <div class="hud" aria-hidden="true">
+    <div class="bracket nw"></div>
+    <div class="bracket ne"></div>
+    <div class="bracket sw"></div>
+    <div class="bracket se"></div>
+    <div class="reticle"></div>
+    <div class="tl"><span class="rec-dot"></span>REC&nbsp; <span id="recTime">00:00:00</span></div>
+    <div class="tc">CAM-07 &nbsp; FISHEYE 1.7mm &nbsp; f/1.4</div>
+    <div class="tr" id="clock">0000-00-00  00:00:00</div>
+    <div class="bl">NTSC &nbsp; 480i &nbsp; ISO-400 &nbsp; <span id="frameNo">F 0000000</span></div>
+    <div class="br" id="hostHud">OBJ-07 &nbsp; APPS</div>
+    <button class="hud-toggle" id="fisheyeBtn" type="button">FISHEYE ON</button>
+  </div>
+
+  <div id="boot">
+    <div class="boot-inner">
+      <div class="k">POWER ON</div>
+      <h1>ОБЪЕКТИВ-07</h1>
+      <div class="boot-line"><span>LENS</span><b>FISHEYE 1.7mm</b></div>
+      <div class="boot-line"><span>IRIS</span><b>f/1.4</b></div>
+      <div class="boot-line"><span>SIGNAL</span><b>NTSC-M</b></div>
+      <div class="boot-line"><span>SOURCE</span><b>XDG DESKTOP ENTRIES</b></div>
+      <div class="boot-line"><span>CALIBRATION</span><b>BARREL DISTORTION</b></div>
+      <div class="bar"><i></i></div>
+    </div>
+  </div>
+
+  <div id="help">
+    <div class="help-card">
+      <h2>OSD / HELP</h2>
+      <p>Дашборд приложений под объективом старой камеры.</p>
+      <ul>
+        <li><kbd>/</kbd> — фокус на поиск</li>
+        <li><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> — выбор ярлыка</li>
+        <li><kbd>↵</kbd> — запустить</li>
+        <li><kbd>S</kbd> — в избранное / убрать</li>
+        <li><kbd>0</kbd>–<kbd>9</kbd> — канал</li>
+        <li><kbd>F</kbd> — fisheye on/off</li>
+        <li><kbd>R</kbd> — пересканировать приложения</li>
+        <li><kbd>H</kbd> — этот экран</li>
+        <li><kbd>ESC</kbd> — закрыть / сбросить поиск</li>
+      </ul>
+      <p>Конфиг: <code>~/.config/objektiv/config.json</code></p>
+      <button class="btn" id="helpClose" type="button">CLOSE</button>
+    </div>
+  </div>
+
+  <script src="payload.js"></script>
+  <script src="camera.js"></script>
+  <script src="apps.js"></script>
+</body>
+</html>
